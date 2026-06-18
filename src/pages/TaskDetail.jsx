@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { EMPTY_TASK_FORM, deleteTask, fetchTaskById, updateTask } from "../services/taskService";
 import { formatDateDisplay, formatDateInput, getPriorityTone, getTaskTiming } from "../utils/taskUtils";
+import { fetchProfiles } from "../services/profileService";
 
 function TaskDetail() {
   const { taskId } = useParams();
@@ -13,6 +14,7 @@ function TaskDetail() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [form, setForm] = useState(EMPTY_TASK_FORM);
+  const [employees, setEmployees] = useState([]);
 
   useEffect(() => {
     let active = true;
@@ -49,7 +51,14 @@ function TaskDetail() {
       active = false;
     };
   }, [taskId]);
+    useEffect(() => {
+      async function loadEmployees() {
+        const { data } = await fetchProfiles();
+        setEmployees(data ?? []);
+      }
 
+      loadEmployees();
+    }, []);
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -195,14 +204,26 @@ function TaskDetail() {
               />
             </label>
 
-            <label className="field">
-              <span>Assigned To</span>
-              <input
-                className="input"
-                value={form.assigned_to}
-                onChange={(event) => updateForm("assigned_to", event.target.value)}
-              />
-            </label>
+              <label className="field">
+            <span>Assigned To</span>
+
+            <select
+              className="input"
+              value={form.assigned_to || ""}
+              onChange={(event) => updateForm("assigned_to", event.target.value)}
+            >
+              <option value="">Select Employee</option>
+
+              {employees.map((employee) => (
+                <option
+                  key={employee.id}
+                  value={employee.email}
+                >
+                  {employee.full_name} ({employee.role})
+                </option>
+              ))}
+            </select>
+          </label>
 
             <label className="field">
               <span>Start Date</span>

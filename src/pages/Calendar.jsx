@@ -4,7 +4,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { useNavigate } from "react-router-dom";
-import { fetchTasks } from "../services/taskService";
+import { fetchTasks, fetchAllTasks } from "../services/taskService";
+import { getCurrentProfile } from "../services/profileService";
 import { getPriorityTone, getTaskTiming, normalizeDateKey } from "../utils/taskUtils";
 
 function Calendar() {
@@ -17,7 +18,12 @@ function Calendar() {
     let active = true;
 
     async function loadCalendar() {
-      const { data, error: taskError } = await fetchTasks();
+      const profile = await getCurrentProfile();
+
+      const { data, error: taskError } =
+        profile?.role === "admin"
+          ? await fetchAllTasks()
+          : await fetchTasks();
 
       if (!active) {
         return;
@@ -46,7 +52,7 @@ function Calendar() {
         .filter((task) => task.due_date)
         .map((task) => ({
           id: String(task.id),
-          title: task.task_name,
+          title: `${task.task_name} - ${task.assigned_to || "Self"}`,
           start: normalizeDateKey(task.due_date),
           allDay: true,
           backgroundColor:
@@ -68,6 +74,7 @@ function Calendar() {
           extendedProps: {
             task,
             timing: getTaskTiming(task),
+            assignedTo: task.assigned_to,
           },
         })),
     [tasks],
@@ -113,10 +120,17 @@ function Calendar() {
             info.jsEvent.preventDefault();
             navigate(`/tasks/${info.event.id}`);
           }}
-          eventContent={(arg) => (
+            eventContent={(arg) => (
             <div className="calendar-event">
               <strong>{arg.event.title}</strong>
-              <span>{arg.event.extendedProps.timing}</span>
+
+              <span>
+                {arg.event.extendedProps.assignedTo}
+              </span>
+
+              <span>
+                {arg.event.extendedProps.timing}
+              </span>
             </div>
           )}
         />

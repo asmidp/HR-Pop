@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import TaskDetail from "./pages/TaskDetail";
 import Tasks from "./pages/Tasks";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function AuthenticatedArea() {
   return (
@@ -41,11 +42,15 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/" element={<HomeRedirect />} />
         <Route element={<AuthenticatedArea />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/tasks/:taskId" element={<TaskDetail />} />
-          <Route path="/calendar" element={<Calendar />} />
-        </Route>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tasks" element={<Tasks />} />
+        <Route path="/tasks/:taskId" element={<TaskDetail />} />
+        <Route path="/calendar" element={<Calendar />} />
+
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/tasks" element={<Tasks />} />
+        <Route path="/admin/calendar" element={<Calendar />} />
+      </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

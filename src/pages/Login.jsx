@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase";
+import { getCurrentProfile } from "../services/profileService";
 
 function Login() {
   const navigate = useNavigate();
@@ -10,24 +11,37 @@ function Login() {
   const [error, setError] = useState("");
 
   async function handleSubmit(event) {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
+  event.preventDefault();
+  setLoading(true);
+  setError("");
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const { error: authError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (authError) {
-      console.error("Supabase email login failed", authError);
-      setError("We couldn't sign you in. Please check your email and password.");
-      setLoading(false);
-      return;
-    }
-
-    navigate("/dashboard", { replace: true });
+  if (authError) {
+    console.error("Supabase email login failed", authError);
+    setError("We couldn't sign you in. Please check your email and password.");
+    setLoading(false);
+    return;
   }
+
+  const profile = await getCurrentProfile();
+
+  console.log("Profile:", profile);
+console.log("Role:", profile?.role);
+
+if (profile?.role === "admin") {
+  console.log("Navigating to /admin");
+  navigate("/admin", { replace: true });
+} else {
+  console.log("Navigating to /dashboard");
+  navigate("/dashboard", { replace: true });
+}
+
+  setLoading(false);
+}
 
   return (
     <div className="auth-screen">

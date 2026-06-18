@@ -562,6 +562,18 @@ p {
   gap: 4px;
   color: #fff;
 }
+  .fc .fc-daygrid-event,
+  .fc .fc-timegrid-event {
+    color: white !important;
+  }
+
+  .fc .fc-daygrid-event .fc-event-title,
+  .fc .fc-daygrid-event .fc-event-time,
+  .calendar-event,
+  .calendar-event strong,
+  .calendar-event span {
+    color: white !important;
+  }
 
 .fc {
   --fc-border-color: rgba(15, 23, 42, 0.08);

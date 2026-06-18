@@ -83,6 +83,25 @@ export async function fetchTasks() {
   const failed = resultWithFriendlyError(error, FRIENDLY_TASK_ERROR, "Supabase fetchTasks failed");
   return failed ?? { data: sortTasks(data ?? []), error: null, friendlyMessage: "" };
 }
+export async function fetchAllTasks() {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select(TASK_COLUMNS)
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  const failed = resultWithFriendlyError(
+    error,
+    FRIENDLY_TASK_ERROR,
+    "Supabase fetchAllTasks failed"
+  );
+
+  return failed ?? {
+    data: sortTasks(data ?? []),
+    error: null,
+    friendlyMessage: "",
+  };
+}
 
 export async function fetchTaskById(taskId) {
   const { data, error } = await supabase.from("tasks").select(TASK_COLUMNS).eq("id", taskId).single();
@@ -96,10 +115,31 @@ export async function createTask(task) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const payload = {
-    ...cleanTaskPayload(task),
-    user_id: user.id,
-  };
+  let assignedUserId = user.id;
+
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("id, full_name")
+  .eq("email", task.assigned_to)
+  .single();
+
+  console.log("Assigned email:", task.assigned_to);
+  console.log("Found profile:", profile);
+
+  if (profile) {
+  assignedUserId = profile.id;
+  task.assigned_to = profile.full_name;
+}
+
+
+console.log("Final assignedUserId:", assignedUserId);
+
+const payload = {
+  ...cleanTaskPayload(task),
+  assigned_to: task.assigned_to || user.user_metadata?.name,
+  user_id: assignedUserId,
+  created_by: user.id,
+};
 
   const { data, error } = await supabase
     .from("tasks")
@@ -107,7 +147,17 @@ export async function createTask(task) {
     .select(TASK_COLUMNS)
     .single();
 
-  return failed ?? { data, error: null, friendlyMessage: "" };
+  const failed = resultWithFriendlyError(
+    error,
+    FRIENDLY_SAVE_ERROR,
+    "Supabase createTask failed"
+  );
+
+  return failed ?? {
+    data,
+    error: null,
+    friendlyMessage: "",
+  };
 }
 
 export async function updateTask(taskId, updates) {

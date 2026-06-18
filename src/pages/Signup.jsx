@@ -29,7 +29,7 @@ function Signup() {
     setError("");
     setNotice("");
 
-    const { error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
@@ -41,6 +41,8 @@ function Signup() {
         },
       },
     });
+        console.log("Auth Data:", authData);
+      console.log("Auth Error:", authError);
 
     if (authError) {
       console.error("Supabase signup failed", authError);
@@ -48,9 +50,11 @@ function Signup() {
       setLoading(false);
       return;
     }
-
-    const { error: employeeError, friendlyMessage } = await createEmployee(form);
-
+    console.log("User ID:", authData?.user?.id);
+    console.log("Calling createEmployee...");
+    const { error: employeeError, friendlyMessage } = await createEmployee(form, authData.user.id);
+    console.log("Employee Error:", employeeError);
+    console.log("Friendly Message:", friendlyMessage);
     if (employeeError) {
       setError(friendlyMessage);
       setLoading(false);

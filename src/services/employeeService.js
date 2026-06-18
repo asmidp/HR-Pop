@@ -10,21 +10,33 @@ export function cleanEmployeePayload(employee) {
   };
 }
 
-export async function createEmployee(employee) {
+export async function createEmployee(employee, userId) {
   const { data, error } = await supabase
-    .from("employees")
-    .insert(cleanEmployeePayload(employee))
-    .select("id,name,email,department,role,joining_date")
+    .from("profiles")
+    .insert({
+      id: userId,
+      email: employee.email,
+      full_name: employee.name,
+      role: "employee",
+    })
+    .select()
     .single();
 
   if (error) {
     console.error("Supabase createEmployee failed", error);
+
     return {
       data: null,
       error,
-      friendlyMessage: "Your account was created, but we couldn't save the employee details.",
+      friendlyMessage:
+        "Your account was created, but we couldn't save the profile.",
     };
   }
 
-  return { data, error: null, friendlyMessage: "" };
+  return {
+    data,
+    error: null,
+    friendlyMessage: "",
+  };
 }
+

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { EMPTY_TASK_FORM, createTask, fetchTasks } from "../services/taskService";
+import { fetchProfiles } from "../services/profileService";
+import { getCurrentProfile } from "../services/profileService";
 import {
   formatDateDisplay,
   getPriorityTone,
@@ -17,33 +19,51 @@ function Tasks() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [form, setForm] = useState(EMPTY_TASK_FORM);
   const [saving, setSaving] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    let active = true;
+  let active = true;
 
-    async function loadTasks() {
-      const { data, error: taskError } = await fetchTasks();
+  async function loadTasks() {
+    const { data, error: taskError } = await fetchTasks();
 
-      if (!active) {
-        return;
-      }
+    if (!active) return;
 
-      if (taskError) {
-        setError(taskError.friendlyMessage || "We couldn't load task data right now.");
-        setLoading(false);
-        return;
-      }
-
-      setTasks(data ?? []);
+    if (taskError) {
+      setError(taskError.friendlyMessage);
       setLoading(false);
+      return;
+    }
+
+    setTasks(data ?? []);
+    setLoading(false);
+  }
+
+      async function loadEmployees() {
+      const { data } = await fetchProfiles();
+
+      if (!active) return;
+
+      setEmployees(data ?? []);
+    }
+
+    async function loadProfile() {
+      const profile = await getCurrentProfile();
+
+      if (!active) return;
+
+      setProfile(profile);
     }
 
     loadTasks();
+    loadEmployees();
+    loadProfile();
 
-    return () => {
-      active = false;
-    };
-  }, []);
+  return () => {
+    active = false;
+  };
+}, []);
 
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -56,6 +76,9 @@ function Tasks() {
     setNotice("");
 
     const { data, error: createError, friendlyMessage } = await createTask(form);
+    console.log("Created data:", data);
+    console.log("Create error:", createError);
+    console.log("Friendly message:", friendlyMessage);
 
     if (createError) {
       setError(friendlyMessage);
@@ -173,16 +196,28 @@ function Tasks() {
             />
           </label>
 
-          <label className="field">
-            <span>Assigned To</span>
-            <input
-              className="input"
-              value={form.assigned_to}
-              onChange={(event) => updateForm("assigned_to", event.target.value)}
-              placeholder="Team member"
-            />
-          </label>
+            {profile?.role === "admin" && (
+            <label className="field">
+              <span>Assigned To</span>
 
+              <select
+                className="input"
+                value={form.assigned_to}
+                onChange={(event) => updateForm("assigned_to", event.target.value)}
+              >
+                <option value="">Select Employee</option>
+
+                {employees.map((employee) => (
+                  <option
+                    key={employee.id}
+                    value={employee.email}
+                  >
+                    {employee.full_name} ({employee.role})
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="field">
             <span>Start Date</span>
             <input
